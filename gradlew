@@ -155,6 +155,10 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
     esac
 fi
 
+
+JAVACMD="/home/ahydul/Documents/Programming/java-jdk-17/bin/java"
+
+
 # Collect all arguments for the java command, stacking in reverse order:
 #   * args from the command line
 #   * the main class name
