@@ -177,6 +177,7 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         for (PotionEffectInstance effect : this.effects.values()) {
             // there should be some balance but that's for future me to do
             effect.duration += portion;
+            effect.duration = Math.min(Config.maxPotionDuration * 20, effect.duration);
         }
 
         markDirty();
@@ -190,6 +191,7 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         for (PotionEffectInstance effect : this.effects.values()) {
             // there should be some balance but that's for future me to do
             effect.amplifier += portion;
+            effect.amplifier = Math.min(Config.maxPotencyLevel, effect.amplifier);
         }
 
         markDirty();

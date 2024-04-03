@@ -27,10 +27,18 @@ public class Config {
     static boolean canUseReagents = true;
     static final String canUseReagentsStr = "can_use_reagents";
 
+    static int maxPotencyLevel = 3;
+    static final String maxPotencyLevelStr = "maxPotencyLevel";
+
+    static int maxPotionDuration = 960;
+    static final String maxPotionDurationStr = "maxPotionDuration";
+
     static void loadDefaults() {
         debug = false;
         allowMixing = true;
         canUseReagents = true;
+        maxPotencyLevel = 3;
+        maxPotionDuration = 960;
     }
 
     static void resetConfig() {
@@ -97,7 +105,32 @@ public class Config {
         else {
             containsAll = false;
         }
+        if (config.containsKey(maxPotencyLevelStr)) {
+            int mpl = Integer.parseInt(config.get(maxPotencyLevelStr));
+            if (mpl > 0) {
+                maxPotencyLevel = mpl;
+            }
+            else {
+                containsAll = false;
+            }
+        }
+        else {
+            containsAll = false;
+        }
+        if (config.containsKey(maxPotionDurationStr)) {
+            int mpd = Integer.parseInt(config.get(maxPotionDurationStr));
+            if (mpd > 0) {
+                maxPotionDuration = mpd;
+            }
+            else {
+                containsAll = false;
+            }
+        }
+        else {
+            containsAll = false;
+        }
 
+        
         // config is missing some properties, probably out of date
         if (!containsAll) {
             try {
@@ -142,6 +175,13 @@ public class Config {
             ofstream.write("#Should Adding Reagents to Mixtures be Possible?\n");
             ofstream.write(canUseReagentsStr + '=');
             writeBool(ofstream, canUseReagents);
+
+            ofstream.write("#Maximum potion potency level\n");
+            ofstream.write(maxPotencyLevelStr + '=' + maxPotencyLevel+ '\n');
+            
+            ofstream.write("#Maximum potion duration in seconds\n");
+            ofstream.write(maxPotionDurationStr + '=' + maxPotionDuration);
+
         }
     }
 
