@@ -33,9 +33,6 @@ public class Config {
     static boolean canUseReagents = true;
     static final String canUseReagentsStr = "can_use_reagents";
 
-    static float potencyUpChanceNumEffectsBy = 0.3f;
-    static final String potencyUpChanceNumEffectsByStr = "potencyUpChanceNumEffectsBy";
-
     static float decreaseDurationPerNumEffectsBy = 0.25f;
     static final String decreaseDurationPerNumEffectsByStr = "decreaseDurationPerNumEffectsBy";
 
@@ -50,7 +47,6 @@ public class Config {
         debug = false;
         allowMixing = true;
         canUseReagents = true;
-        potencyUpChanceNumEffectsBy = 0.3f;
         decreaseDurationPerNumEffectsBy = 0.25f;
         dilutionFactor = 0.2f;
         loadEffectConfig();
@@ -146,19 +142,6 @@ public class Config {
             containsAll = false;
         }
 
-        if (config.containsKey(potencyUpChanceNumEffectsByStr)) {
-            float chance = Float.parseFloat(config.get(potencyUpChanceNumEffectsByStr));
-            if (chance < 0 || chance > 1) {
-                containsAll = false;
-            }
-            else{
-                potencyUpChanceNumEffectsBy = chance;
-            }
-        }
-        else {
-            containsAll = false;
-        }
-
         if (config.containsKey(decreaseDurationPerNumEffectsByStr)) {
             decreaseDurationPerNumEffectsBy = Math.max(Float.parseFloat(config.get(decreaseDurationPerNumEffectsByStr)), 0);
         }
@@ -239,9 +222,6 @@ public class Config {
             ofstream.write("#Should Adding Reagents to Mixtures be Possible?\n");
             ofstream.write(canUseReagentsStr + '=');
             writeBool(ofstream, canUseReagents);
-
-            ofstream.write("#Chance that glowstone wont make the potion have a higher potency per number of effects in cauldron\n");
-            ofstream.write(potencyUpChanceNumEffectsByStr + '=' + potencyUpChanceNumEffectsBy + '\n');
 
             ofstream.write("#How much maxDuration is decreased per number of extra (more than 1) effects in cauldron . 0 to disable\n");
             ofstream.write(decreaseDurationPerNumEffectsByStr + '=' + decreaseDurationPerNumEffectsBy + '\n');

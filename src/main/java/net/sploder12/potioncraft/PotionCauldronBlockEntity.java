@@ -138,7 +138,6 @@ public class PotionCauldronBlockEntity extends BlockEntity {
                 maxDuration * 20 / (1 + (getNumberOfEffects()-1)*Config.decreaseDurationPerNumEffectsBy), 
                 effectInstance.duration
             );
-            this.effects.put(type, effectInstance);
         }
     }
 

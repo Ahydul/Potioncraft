@@ -58,8 +58,6 @@ public class PotionEffectInstance {
     public PotionEffectInstance combine(PotionEffectInstance other, int level) {
         this.duration += other.duration;
         this.amplifier += other.amplifier;
-        // this.extendDuration(other.duration, level);
-        // this.amplify(other.amplifier, level);
         this.showIcon |= other.showIcon;
         this.showParticles |= other.showParticles;
         this.ambient |= other.ambient;
