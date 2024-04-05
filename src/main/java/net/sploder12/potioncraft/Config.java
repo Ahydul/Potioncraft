@@ -1,6 +1,9 @@
 package net.sploder12.potioncraft;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.registry.Registries;
+import net.minecraft.text.Text;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,7 +12,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Config {
     static final String filename = "potioncraft/potioncraft";
@@ -27,18 +33,52 @@ public class Config {
     static boolean canUseReagents = true;
     static final String canUseReagentsStr = "can_use_reagents";
 
-    static int maxPotencyLevel = 3;
-    static final String maxPotencyLevelStr = "maxPotencyLevel";
+    static float potencyUpChanceNumEffectsBy = 0.3f;
+    static final String potencyUpChanceNumEffectsByStr = "potencyUpChanceNumEffectsBy";
 
-    static int maxPotionDuration = 960;
-    static final String maxPotionDurationStr = "maxPotionDuration";
+    static float decreaseDurationPerNumEffectsBy = 0.25f;
+    static final String decreaseDurationPerNumEffectsByStr = "decreaseDurationPerNumEffectsBy";
 
+    static float dilutionFactor = 0.2f;
+    static final String dilutionFactorStr = "dilutionFactor";
+
+    public record Pair(float first, float second) { }
+    static Map<StatusEffect, Pair> effectConfig = new HashMap<StatusEffect, Pair>();
+    static final String effectConfigStr = "effectConfig";
+    
     static void loadDefaults() {
         debug = false;
         allowMixing = true;
         canUseReagents = true;
-        maxPotencyLevel = 3;
-        maxPotionDuration = 960;
+        potencyUpChanceNumEffectsBy = 0.3f;
+        decreaseDurationPerNumEffectsBy = 0.25f;
+        dilutionFactor = 0.2f;
+        loadEffectConfig();
+    }
+
+    private static void loadEffectConfig(){
+        //Speed, strength, instant health, instant damage, jump boost, fire resistance, water breathing, invisibility, night vision, health boost
+        IntStream.of(1,5,6,7,8,12,13,14,16,21).forEach(i -> 
+            effectConfig.put(Registries.STATUS_EFFECT.get(i), new Pair(480f, 3f))
+        );
+        
+        effectConfig.put(Registries.STATUS_EFFECT.get(2), new Pair(240f, 4f)); //Slowness
+        effectConfig.put(Registries.STATUS_EFFECT.get(3), new Pair(120f, 3f)); //Haste
+        effectConfig.put(Registries.STATUS_EFFECT.get(4), new Pair(300f, 4f)); //Mining Fatigue
+        effectConfig.put(Registries.STATUS_EFFECT.get(9), new Pair(30f, 1f)); //Nausea
+        effectConfig.put(Registries.STATUS_EFFECT.get(10), new Pair(120f, 3f)); //Regeneration
+        effectConfig.put(Registries.STATUS_EFFECT.get(11), new Pair(120f, 3f)); //Resistance
+        effectConfig.put(Registries.STATUS_EFFECT.get(15), new Pair(120f, 1f)); //Blindness
+        effectConfig.put(Registries.STATUS_EFFECT.get(17), new Pair(60f, 3f)); //Hunger
+        effectConfig.put(Registries.STATUS_EFFECT.get(18), new Pair(240f, 2f)); //Weakness
+        effectConfig.put(Registries.STATUS_EFFECT.get(19), new Pair(120f, 3f)); //Poison
+        effectConfig.put(Registries.STATUS_EFFECT.get(20), new Pair(60f, 3f)); //Wither
+        effectConfig.put(Registries.STATUS_EFFECT.get(22), new Pair(120f, 4f)); //Absorption
+        effectConfig.put(Registries.STATUS_EFFECT.get(24), new Pair(120f, 1f)); //Glowing
+        effectConfig.put(Registries.STATUS_EFFECT.get(25), new Pair(20f, 2f)); //Levitation
+        effectConfig.put(Registries.STATUS_EFFECT.get(28), new Pair(240f, 1f)); //Slow falling
+        effectConfig.put(Registries.STATUS_EFFECT.get(30), new Pair(120f, 2f)); //Dolphins grace
+        effectConfig.put(Registries.STATUS_EFFECT.get(33), new Pair(60f, 1f)); //Darkness
     }
 
     static void resetConfig() {
@@ -105,31 +145,55 @@ public class Config {
         else {
             containsAll = false;
         }
-        if (config.containsKey(maxPotencyLevelStr)) {
-            int mpl = Integer.parseInt(config.get(maxPotencyLevelStr));
-            if (mpl > 0) {
-                maxPotencyLevel = mpl;
-            }
-            else {
+
+        if (config.containsKey(potencyUpChanceNumEffectsByStr)) {
+            float chance = Float.parseFloat(config.get(potencyUpChanceNumEffectsByStr));
+            if (chance < 0 || chance > 1) {
                 containsAll = false;
             }
-        }
-        else {
-            containsAll = false;
-        }
-        if (config.containsKey(maxPotionDurationStr)) {
-            int mpd = Integer.parseInt(config.get(maxPotionDurationStr));
-            if (mpd > 0) {
-                maxPotionDuration = mpd;
-            }
-            else {
-                containsAll = false;
+            else{
+                potencyUpChanceNumEffectsBy = chance;
             }
         }
         else {
             containsAll = false;
         }
 
+        if (config.containsKey(decreaseDurationPerNumEffectsByStr)) {
+            decreaseDurationPerNumEffectsBy = Math.max(Float.parseFloat(config.get(decreaseDurationPerNumEffectsByStr)), 0);
+        }
+        else {
+            containsAll = false;
+        }
+        
+        if (config.containsKey(dilutionFactorStr)) {
+            dilutionFactor = Math.max(Math.min(Float.parseFloat(config.get(dilutionFactorStr)), 1),0);
+        }
+        else {
+            containsAll = false;
+        }
+
+        if (config.containsKey(effectConfigStr)) {
+            String[] spl = config.get(effectConfigStr).replaceAll(" ", "").split("|");
+            for (String s : spl) {
+                String[] spl2 = s.split(",");
+                try {
+                    effectConfig.put(
+                        Registries.STATUS_EFFECT.get(Integer.parseInt(spl2[0])),
+                        new Pair(
+                            Float.parseFloat(spl2[1]),
+                            Float.parseFloat(spl2[2])
+                        )
+                    );
+                } catch (Exception e) {
+                    containsAll = false;
+                    break;
+                }
+            }
+        }
+        else {
+            containsAll = false;
+        }
         
         // config is missing some properties, probably out of date
         if (!containsAll) {
@@ -176,12 +240,20 @@ public class Config {
             ofstream.write(canUseReagentsStr + '=');
             writeBool(ofstream, canUseReagents);
 
-            ofstream.write("#Maximum potion potency level\n");
-            ofstream.write(maxPotencyLevelStr + '=' + maxPotencyLevel+ '\n');
-            
-            ofstream.write("#Maximum potion duration in seconds\n");
-            ofstream.write(maxPotionDurationStr + '=' + maxPotionDuration);
+            ofstream.write("#Chance that glowstone wont make the potion have a higher potency per number of effects in cauldron\n");
+            ofstream.write(potencyUpChanceNumEffectsByStr + '=' + potencyUpChanceNumEffectsBy + '\n');
 
+            ofstream.write("#How much maxDuration is decreased per number of extra (more than 1) effects in cauldron . 0 to disable\n");
+            ofstream.write(decreaseDurationPerNumEffectsByStr + '=' + decreaseDurationPerNumEffectsBy + '\n');
+            
+            ofstream.write("#Factor of lost effect when adding more effects or diluting cauldron. 1 to disable\n");
+            ofstream.write(dilutionFactorStr + '=' + dilutionFactor + '\n');
+
+            ofstream.write("#List of effect_id max_duration max_potency_Level \n");
+            ofstream.write(effectConfig.entrySet().stream()
+                .map(e -> StatusEffect.getRawId(e.getKey()) + ", "+ e.getValue().first+ ", "+ e.getValue().second)
+                .collect(Collectors.joining(" | ")) + '\n'
+            );
         }
     }
 

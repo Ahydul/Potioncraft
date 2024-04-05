@@ -74,6 +74,10 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         return !this.effects.isEmpty();
     }
 
+    public int getNumberOfEffects() {
+        return this.effects.size();
+    }
+
     public ArrayList<StatusEffectInstance> getEffects() {
         ArrayList<StatusEffectInstance> effects = new ArrayList<>(this.effects.size());
 
@@ -123,6 +127,21 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         }
     }
 
+    private void limitDurAmp(StatusEffect type) {
+        // Limit max duration and amplifier
+        if (Config.effectConfig.containsKey(type)) {
+            PotionEffectInstance effectInstance = this.effects.get(type);
+            float maxDuration = Config.effectConfig.get(type).first();
+            float maxPotencyLevel = Config.effectConfig.get(type).second();
+            effectInstance.amplifier = Math.min(maxPotencyLevel, effectInstance.amplifier);    
+            effectInstance.duration = Math.min(
+                maxDuration * 20 / (1 + (getNumberOfEffects()-1)*Config.decreaseDurationPerNumEffectsBy), 
+                effectInstance.duration
+            );
+            this.effects.put(type, effectInstance);
+        }
+    }
+
     public void addEffect(float dilution, PotionEffectInstance effect) {
         effect.dilute(dilution);
 
@@ -130,13 +149,15 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         if (effect.duration < 1.0f) {
             effect.duration = 1.0f;
         }
-
-        if (this.effects.containsKey(effect.type)) {
-            this.effects.get(effect.type).combine(effect);
+        StatusEffect type = effect.type;
+        if (this.effects.containsKey(type)) {
+            this.effects.get(type).combine(effect, getNumberOfEffects());
         }
         else {
-            this.effects.put(effect.type, effect);
+            this.effects.put(type, effect);
         }
+
+        limitDurAmp(type);
 
         markDirty();
     }
@@ -153,7 +174,7 @@ public class PotionCauldronBlockEntity extends BlockEntity {
             }
 
             if (newEffects.containsKey(effect.type)) {
-                newEffects.get(effect.type).combine(effect);
+                newEffects.get(effect.type).combine(effect, getNumberOfEffects());
             } else {
                 newEffects.put(effect.type, effect);
             }
@@ -175,9 +196,7 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         float portion = (dur / this.effects.size()) / this.getLevel();
 
         for (PotionEffectInstance effect : this.effects.values()) {
-            // there should be some balance but that's for future me to do
-            effect.duration += portion;
-            effect.duration = Math.min(Config.maxPotionDuration * 20, effect.duration);
+            effect.extendDuration(portion, getNumberOfEffects());
         }
 
         markDirty();
@@ -189,9 +208,7 @@ public class PotionCauldronBlockEntity extends BlockEntity {
         float portion = (amp / this.effects.size()) / this.getLevel();
 
         for (PotionEffectInstance effect : this.effects.values()) {
-            // there should be some balance but that's for future me to do
-            effect.amplifier += portion;
-            effect.amplifier = Math.min(Config.maxPotencyLevel, effect.amplifier);
+            effect.amplify(portion, getNumberOfEffects());
         }
 
         markDirty();
@@ -232,6 +249,8 @@ public class PotionCauldronBlockEntity extends BlockEntity {
             for (PotionEffectInstance effect : this.effects.values()) {
                 if (effect.amplifier <= PotionEffectInstance.epsilon || effect.duration < PotionEffectInstance.epsilon) {
                     this.effects.remove(effect.type);
+                } else {
+                    limitDurAmp(effect.type);
                 }
             }
         }

@@ -55,9 +55,11 @@ public class PotionEffectInstance {
         assert potion.getEffects().size() == 1;
     }
 
-    public PotionEffectInstance combine(PotionEffectInstance other) {
+    public PotionEffectInstance combine(PotionEffectInstance other, int level) {
         this.duration += other.duration;
         this.amplifier += other.amplifier;
+        // this.extendDuration(other.duration, level);
+        // this.amplify(other.amplifier, level);
         this.showIcon |= other.showIcon;
         this.showParticles |= other.showParticles;
         this.ambient |= other.ambient;
@@ -94,6 +96,31 @@ public class PotionEffectInstance {
 
         if (amplifier - epsilon <= 0.0f) {
             amplifier = 0.0f;
+        }
+    }
+
+    public void extendDuration(float duration, int level) {
+        if (Config.effectConfig.containsKey(this.type)) {
+            float maxDuration = Config.effectConfig.get(this.type).first();
+            this.duration += duration;
+            this.duration = Math.min(
+                maxDuration * 20 / (1 + (level-1)*Config.decreaseDurationPerNumEffectsBy), 
+                this.duration
+            );
+        }
+        else{
+            this.duration += duration;
+        }
+    }
+
+    public void amplify(float amp, int numOfEffects) {
+        if (Config.effectConfig.containsKey(this.type)) {
+            float maxPotencyLevel = Config.effectConfig.get(this.type).second();
+            this.amplifier += amp;
+            this.amplifier = Math.min(maxPotencyLevel, this.amplifier);    
+        }
+        else {
+            this.amplifier += amp;
         }
     }
 
