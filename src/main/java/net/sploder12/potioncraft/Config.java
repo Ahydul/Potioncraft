@@ -36,9 +36,6 @@ public class Config {
     static float decreaseDurationPerNumEffectsBy = 0.25f;
     static final String decreaseDurationPerNumEffectsByStr = "decreaseDurationPerNumEffectsBy";
 
-    static float dilutionFactor = 0.2f;
-    static final String dilutionFactorStr = "dilutionFactor";
-
     public record Pair(float first, float second) { }
     static Map<StatusEffect, Pair> effectConfig = new HashMap<StatusEffect, Pair>();
     static final String effectConfigStr = "effectConfig";
@@ -48,7 +45,6 @@ public class Config {
         allowMixing = true;
         canUseReagents = true;
         decreaseDurationPerNumEffectsBy = 0.25f;
-        dilutionFactor = 0.2f;
         loadEffectConfig();
     }
 
@@ -149,13 +145,6 @@ public class Config {
             containsAll = false;
         }
         
-        if (config.containsKey(dilutionFactorStr)) {
-            dilutionFactor = Math.max(Math.min(Float.parseFloat(config.get(dilutionFactorStr)), 1),0);
-        }
-        else {
-            containsAll = false;
-        }
-
         if (config.containsKey(effectConfigStr)) {
             String[] spl = config.get(effectConfigStr).replaceAll(" ", "").split("|");
             for (String s : spl) {
@@ -226,9 +215,6 @@ public class Config {
             ofstream.write("#How much maxDuration is decreased per number of extra (more than 1) effects in cauldron . 0 to disable\n");
             ofstream.write(decreaseDurationPerNumEffectsByStr + '=' + decreaseDurationPerNumEffectsBy + '\n');
             
-            ofstream.write("#Factor of lost effect when adding more effects or diluting cauldron. 1 to disable\n");
-            ofstream.write(dilutionFactorStr + '=' + dilutionFactor + '\n');
-
             ofstream.write("#List of effect_id max_duration max_potency_Level \n");
             ofstream.write(effectConfig.entrySet().stream()
                 .map(e -> StatusEffect.getRawId(e.getKey()) + ", "+ e.getValue().first+ ", "+ e.getValue().second)
